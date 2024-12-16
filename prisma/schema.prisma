@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  comments  Comment[] // Relacionamento com comentários (um usuário pode ter múltiplos comentários)
+}
+
+model Author {
+  id            Int     @id @default(autoincrement())
+  surname       String
+  completeName  String
+  tags          String
+  posts         Post[]  // Relacionamento com posts (um autor pode ter múltiplos posts)
+  is_a_user     String
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  text      String
+  authorId  Int
+  author    Author    @relation(fields: [authorId], references: [id]) // Relação com o autor
+  comments  Comment[] // Relacionamento com comentários (um post pode ter múltiplos comentários)
+}
+
+model Comment {
+  id       Int    @id @default(autoincrement())
+  text     String
+  postId   Int
+  post     Post   @relation(fields: [postId], references: [id]) // Relação com o post
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id]) // Relação com o usuário
+}
