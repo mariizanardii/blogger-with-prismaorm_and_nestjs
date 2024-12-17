@@ -13,7 +13,7 @@ export class UserService {
     });
 
     if (userWithEmail){
-      throw new HttpException ('Este e-mail já está cadastrado.', HttpStatus.BAD_REQUEST);
+      throw new HttpException ('This mail is already register.', HttpStatus.BAD_REQUEST);
     }
     return await this.prisma.user.create({data});
   }
@@ -26,7 +26,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({where: {id}});
 
     if (!user){
-      throw new HttpException ('Usuário não encontrado!', HttpStatus.BAD_REQUEST);
+      throw new HttpException ('User not found!', HttpStatus.BAD_REQUEST);
     }
     return await this.prisma.user.findUnique({ where: { id } });
   }
@@ -35,7 +35,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({where: {id}});
     
     if (!user){
-      throw new HttpException ("Usuário não encontrado!", HttpStatus.BAD_REQUEST);
+      throw new HttpException ("User not found!", HttpStatus.BAD_REQUEST);
     }
     return await this.prisma.user.update({ where: { id }, data });
   }
@@ -44,7 +44,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({where: {id}});
     
     if (!user){
-      throw new HttpException ("Usuário não encontrado!", HttpStatus.BAD_REQUEST);
+      throw new HttpException ("User not found!", HttpStatus.BAD_REQUEST);
     }
     return await this.prisma.user.delete({ where: { id } });
   }

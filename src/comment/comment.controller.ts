@@ -1,13 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { CommentService } from './comment.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
 
-@Controller('comment')
+@Controller('comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @Post()
-  create(@Body() data ) {
-    return this.commentService.create(data);
+  async create(@Body() createCommentDto: CreateCommentDto) {
+    return this.commentService.create(createCommentDto);
   }
 
   @Get()
@@ -15,18 +16,18 @@ export class CommentController {
     return this.commentService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commentService.findOne(+id);
+  @Get('post/:postId')
+  async findAllCommentsByPostId(@Param('postId') postId: number) {
+    return this.commentService.findAllCommentsByPostId(Number(postId));
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body()data) {
-    return this.commentService.update(+id, data);
+  async updateComment(@Param('id') id: number, @Body('text') newText: string) {
+    return this.commentService.updateComment(Number(id), newText);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentService.remove(+id);
+  @Delete(':id/')
+  async deleteComment(@Param('id') id: number){
+    return this.commentService.deleteComment(Number(id));
   }
 }

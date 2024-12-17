@@ -1,88 +1,86 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Injectable, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateAuthorDto } from './dto/create-author.dto';
+import { UpdateAuthorDto } from './dto/update-author.dto';
 
 @Injectable()
 export class AuthorService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: Prisma.AuthorCreateInput){
-    //validando se os campos obrigatorios estão nulos.
-    if (!data.surname || !data.is_a_user || !data.completeName || !data.is_a_user){
-      throw new HttpException ("Fill in all required fields", HttpStatus.BAD_REQUEST);
+
+  async create(createAuthorDto: CreateAuthorDto) {
+    const { surname, completeName, tags, is_a_user } = createAuthorDto;
+
+    const existingAuthor = await this.prisma.author.findFirst({
+      where: { completeName },
+    });
+
+    if (existingAuthor) {
+      throw new HttpException('Author already exists', HttpStatus.BAD_REQUEST);
     }
 
-    // ja cadastrado?
-    if (data.completeName){
-      const existingAuthor = await this.prisma.author.findFirst({where: {completeName: data.completeName},
-      });
-      
-      if (existingAuthor){
-        throw new HttpException ("This author is already registered", HttpStatus.BAD_REQUEST);
-      }
-    }
-    // validando respostas sim ou nao para user.
-    if (data.is_a_user !== 'yes' && data.is_a_user !== 'no') {
-      throw new HttpException('Inform whether the author is a user with "yes" or "no"', HttpStatus.BAD_REQUEST);
-    }
-    return await this.prisma.author.create({data});
+    return await this.prisma.author.create({
+      data: {
+        surname,
+        completeName,
+        tags,
+        is_a_user,
+      },
+    });
   }
 
-  async findAll(){
-    return await this.prisma.author.findMany();
+ 
+  async findAll() {
+    return await this.prisma.author.findMany({
+      include: { posts: true }, 
+    });
   }
 
   async findOne(id: number) {
-    const existingAuthor = await this.prisma.author.findUnique({where: {id}});
-    
-    if (!existingAuthor){
-      throw new HttpException ("Author not found", HttpStatus.BAD_REQUEST);
+    const author = await this.prisma.author.findUnique({
+      where: { id },
+      include: { posts: true },  
+    });
+
+    if (!author) {
+      throw new HttpException('Author not found', HttpStatus.BAD_REQUEST);
     }
-    return await this.prisma.author.findUnique({where: {id}});
+
+    return author;
   }
 
-  async update(id: number, data: Prisma.AuthorUpdateInput){    
-    const existingAuthor = await this.prisma.author.findUnique({where: {id}});
+ 
+  async update(id: number, updateAuthorDto: UpdateAuthorDto) {
+    const author = await this.prisma.author.findUnique({
+      where: { id },
+    });
 
-    if (!existingAuthor){
-      throw new HttpException ("Author not found", HttpStatus.BAD_REQUEST);
-    }
-    // se encontrou, validar se os dados novos estão de acordo
-    //validando se os campos obrigatorios estão nulos.
-    if (!data.surname || !data.is_a_user || !data.completeName || !data.is_a_user){
-      throw new HttpException ("Fill in all required fields", HttpStatus.BAD_REQUEST);
+    if (!author) {
+      throw new HttpException('Author not found', HttpStatus.BAD_REQUEST);
     }
 
-    if (data.completeName) {
-      const completeName =
-        typeof data.completeName === 'string' ? data.completeName : undefined;
-    
-      if (completeName) {
-        const duplicateAuthor = await this.prisma.author.findFirst({
-          where: {
-            completeName,
-            NOT: { id },  
-          },
-        });
-    
-        if (duplicateAuthor) {
-          throw new HttpException('This author is already registered', HttpStatus.BAD_REQUEST);
-        }
-      }
-    }
-    // validando respostas sim ou nao para user.
-    if (data.is_a_user !== 'yes' && data.is_a_user !== 'no') {
-      throw new HttpException('Inform whether the author is a user with "yes" or "no"', HttpStatus.BAD_REQUEST);
-    }
-    return await this.prisma.author.update({where: {id}, data});
+    return await this.prisma.author.update({
+      where: { id },
+      data: { ...updateAuthorDto },
+    });
   }
-  
-  async remove(id: number){
-    const existingAuthor = await this.prisma.author.findUnique({where: {id}});
+ 
+   async remove(id: number) {
+     const author = await this.prisma.author.findUnique({
+      where: { id },
+      include: { posts: true },  
+    });
 
-    if (!existingAuthor){
-      throw new HttpException ("Author not found", HttpStatus.BAD_REQUEST);
+    if (!author) {
+      throw new NotFoundException('Author not found');
     }
-    return await this.prisma.author.delete({where: {id}});
+
+     await this.prisma.post.deleteMany({
+      where: { authorId: id },
+    });
+
+    return await this.prisma.author.delete({
+      where: { id },
+    });
   }
 }

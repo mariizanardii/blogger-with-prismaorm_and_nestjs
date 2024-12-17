@@ -25,7 +25,7 @@ model Author {
 
 model Post {
   id        Int       @id @default(autoincrement())
-  title     String
+  title     String     
   text      String
   authorId  Int
   author    Author    @relation(fields: [authorId], references: [id]) // Relação com o autor
